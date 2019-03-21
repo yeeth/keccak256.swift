@@ -35,7 +35,7 @@ public final class keccak256 {
         var a = Data(repeating: 0, count: 200)
         let rate = 200 - (256 / 4)
 
-        fold(a: &a, i: data, rate: rate, function: xorin)
+        fold(a: &a, i: data, rate: rate, operation: xorin)
 
         a[data.count] ^= 0x1f
         a[rate - 1] ^= 0x80;
@@ -121,9 +121,7 @@ extension keccak256 {
     }
 
     private static func setout(_ dst: inout Data, _ src: Data) {
-        for i in (0..<src.count) {
-            dst[i] = src[i]
-        }
+        dst.replaceSubrange(0..<src.count, with: src)
     }
 
     private static func xorin(_ dst: inout Data, _ src: Data) {
