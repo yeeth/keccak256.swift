@@ -46,7 +46,7 @@ public final class keccak256 {
         // @todo squeeze output
 
 
-        // @todo https://github.com/uport-project/SwiftKeccak/blob/develop/SwiftKeccak/sha3tiny/keccak-tiny.c#L117
+        // @todo https://github.com/coruus/keccak-tiny/blob/singlefile/keccak-tiny.c#L117
 
         return output
     }
