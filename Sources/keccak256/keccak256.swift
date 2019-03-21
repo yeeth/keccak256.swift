@@ -107,13 +107,13 @@ extension keccak256 {
 extension keccak256 {
 
     // need better name
-    typealias foldFunction = (inout Data, Data) -> Void
+    private typealias Operation = (inout Data, Data) -> Void
 
-    private static func fold(a: inout Data, i: Data, rate: Int, function: foldFunction) {
+    private static func fold(a: inout Data, i: Data, rate: Int, operation: Operation) {
         var length = i.count
         var offset = 0
         while (length >= rate) {
-            function(&a, Data(bytes: i[offset...(offset+rate)]))
+            operation(&a, Data(bytes: i[offset...(offset+rate)]))
             keccak(&a)
             offset += rate
             length -= rate
