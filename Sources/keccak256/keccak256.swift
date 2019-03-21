@@ -30,12 +30,24 @@ public final class keccak256 {
     ]
 
     static func hash(_ data: Data) -> Data {
+        var output = Data(repeating: 0, count: 32)
+
         var a = Data(repeating: 0, count: 200)
-        fold(a: &a, i: data, rate: 200 - (256 / 4), function: xorin)
+        let rate = 200 - (256 / 4)
+
+        fold(a: &a, i: data, rate: rate, function: xorin)
+
+        a[data.count] ^= 0x1f
+        a[rate - 1] ^= 0x80;
+
+        xorin(&a, data);
+        keccak(&a)
+
+        // @todo squeeze output
+
 
         // @todo https://github.com/uport-project/SwiftKeccak/blob/develop/SwiftKeccak/sha3tiny/keccak-tiny.c#L117
 
-        keccak(&a)
         return a
     }
 
@@ -81,7 +93,8 @@ extension keccak256 {
                 }
             }
 
-            data[0] = UInt8(UInt64(data[0]) ^ RC[i]);
+            // @todo this is bad and will overflow in any scenario. We need to change data to a uint64 array and then convert on finalization
+            data[0] = data[0] ^ UInt8(RC[i]);
         }
     }
 
