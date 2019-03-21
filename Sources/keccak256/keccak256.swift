@@ -12,7 +12,7 @@ public final class keccak256 {
     ]
 
     fileprivate static let rho = [
-        UInt8(1), 3, 6, 10,
+        UInt64(1), 3, 6, 10,
         15, 21, 28, 36,
         45, 55,  2, 14,
         27, 41, 56,  8,
@@ -41,7 +41,7 @@ public final class keccak256 {
         a[rate - 1] ^= 0x80;
 
         xorin(&a, data);
-        keccak(&a)
+        keccak(a)
 
         // @todo squeeze output
 
@@ -55,8 +55,14 @@ public final class keccak256 {
 
 extension keccak256 {
 
-    private static func keccak(_ data: inout Data) {
-        var b = Data(repeating: 0, count: 5)
+    private static func keccak(_ input: Data) -> Data {
+        var b = [UInt64](repeating: 0, count: 5)
+
+        let count = input.count / 8
+        var data: [UInt64] = (0..<count).map {
+            let offset = $0 * 8
+            return UInt64(bigEndian: input.subdata(in: (offset..<offset+8)).withUnsafeBytes { $0.pointee })
+        }
 
         stride(from: 0, through: 24, by: 1).forEach {
             i in
@@ -94,11 +100,13 @@ extension keccak256 {
             }
 
             // @todo this is bad and will overflow in any scenario. We need to change data to a uint64 array and then convert on finalization
-            data[0] = data[0] ^ UInt8(RC[i]);
+            data[0] = data[0] ^ RC[i];
         }
+
+        return data.withUnsafeBufferPointer { Data(buffer: $0) }
     }
 
-    private static func rol(_ x: UInt8, _ s: UInt8) -> UInt8 {
+    private static func rol(_ x: UInt64, _ s: UInt64) -> UInt64 {
         return (((x) << s) | ((x) >> (64 - s)))
     }
 
@@ -114,7 +122,7 @@ extension keccak256 {
         var offset = 0
         while (length >= rate) {
             operation(&a, Data(bytes: i[offset...(offset+rate)]))
-            keccak(&a)
+            a = keccak(a)
             offset += rate
             length -= rate
         }
