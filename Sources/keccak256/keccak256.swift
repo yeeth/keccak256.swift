@@ -22,42 +22,26 @@ public final class keccak256 {
 
     fileprivate static let RC = [
         UInt64(1), 0x8082, 0x800000000000808a, 0x8000000080008000,
-0x808b, 0x80000001, 0x8000000080008081, 0x8000000000008009,
-0x8a, 0x88, 0x80008009, 0x8000000a,
-0x8000808b, 0x800000000000008b, 0x8000000000008089, 0x8000000000008003,
-0x8000000000008002, 0x8000000000000080, 0x800a, 0x800000008000000a,
-0x8000000080008081, 0x8000000000008080, 0x80000001, 0x8000000080008008
+        0x808b, 0x80000001, 0x8000000080008081, 0x8000000000008009,
+        0x8a, 0x88, 0x80008009, 0x8000000a,
+        0x8000808b, 0x800000000000008b, 0x8000000000008089, 0x8000000000008003,
+        0x8000000000008002, 0x8000000000000080, 0x800a, 0x800000008000000a,
+        0x8000000080008081, 0x8000000000008080, 0x80000001, 0x8000000080008008
     ]
 
     static func hash(_ data: Data) -> Data {
-        var d = data
+        var a = Data(repeating: 0, count: 200)
+        fold(a: &a, i: data, rate: 200 - (256 / 4), function: xorin)
 
         // @todo https://github.com/uport-project/SwiftKeccak/blob/develop/SwiftKeccak/sha3tiny/keccak-tiny.c#L117
 
-        keccak(&d)
-        return d
+        keccak(&a)
+        return a
     }
 
 }
 
 extension keccak256 {
-
-    private static func fold(a: inout Data, i: inout Data, l: Int, rate: Int) {
-        var L = l
-        var I = i
-        while (L >= rate) {
-            setout(src: a, dst: &I, len: rate)
-            keccak(&a)
-            I += rate
-            L -= rate
-        }
-    }
-
-    private static func setout(src: Data, dst: inout Data, len: Int) {
-        for i in (0..<len) {
-            dst[i] = src[i]
-        }
-    }
 
     private static func keccak(_ data: inout Data) {
         var b = Data(repeating: 0, count: 5)
@@ -105,4 +89,31 @@ extension keccak256 {
         return (((x) << s) | ((x) >> (64 - s)))
     }
 
+}
+
+extension keccak256 {
+
+    // need better name
+    typealias foldFunction = (inout Data, Data) -> Void
+
+    private static func fold(a: inout Data, i: Data, rate: Int, function: foldFunction) {
+        var length = i.count
+        var offset = 0
+        while (length >= rate) {
+            function(&a, Data(bytes: i[offset...(offset+rate)]))
+            keccak(&a)
+            offset += rate
+            length -= rate
+        }
+    }
+
+    private static func setout(_ dst: inout Data, _ src: Data) {
+        for i in (0..<src.count) {
+            dst[i] = src[i]
+        }
+    }
+
+    private static func xorin(_ dst: inout Data, _ src: Data) {
+        dst = dst ^ src
+    }
 }
