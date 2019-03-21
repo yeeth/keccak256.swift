@@ -99,7 +99,6 @@ extension keccak256 {
                 }
             }
 
-            // @todo this is bad and will overflow in any scenario. We need to change data to a uint64 array and then convert on finalization
             data[0] = data[0] ^ RC[i];
         }
 
